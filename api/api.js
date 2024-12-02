@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
+const validator = require("validator");
 
 const app = express();
 const port = 3001;
@@ -39,6 +40,21 @@ app.post("/usuarios", (req, res) => {
   }
   //TODO: validar se a senha tem 1 char maius, 1 char min, 1 num e pelo menos 8 chars
 
+  if (
+    senha.length < 8 ||
+    !validator.isStrongPassword(senha, {
+      minUppercase: 1,
+      minLowercase: 1,
+      minNumbers: 1,
+      minSymbols: 0,
+    })
+  ) {
+    return res.status(400).json({
+      error:
+        "A senha deve conter pelo menos 8 caracteres, incluindo ao menos uma letra maiúscula, uma letra minúscula e um número.",
+    });
+  }
+
   database.run(
     `INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)`,
     [nome, email, senha],
@@ -71,25 +87,63 @@ app.get("/usuarios/login", (req, res) => {
 
 app.get("/tarefas", (req, res) => {
   const { usuario_id } = req.query;
-  //TODO: primeiro verifica se o id do usuario é válido
-
-  database.all(
-    `SELECT * FROM tarefas WHERE usuario_id = ?`,
+  database.get(
+    `SELECT * FROM usuarios WHERE id = ?`,
     [usuario_id],
-    (error, rows) => {
-      if (error)
+    (error, user) => {
+      if (error) {
         return res
           .status(500)
           .json({ error: "Erro ao acessar o banco de dados" });
-      return res.status(200).json(rows);
+      }
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      database.all(
+        `SELECT * FROM tarefas WHERE usuario_id = ?`,
+        [usuario_id],
+        (error, rows) => {
+          if (error) {
+            return res
+              .status(500)
+              .json({ error: "Erro ao acessar o banco de dados" });
+          }
+          return res.status(200).json(rows);
+        }
+      );
     }
   );
 });
 
 app.post("/tarefas", (req, res) => {
   const { tarefa, usuario_id } = req.body; // { tarefa: "Estudar", usuario_id: 1}
-  //TODO: primeiro verifica se o id do usuario é válido
-  //...
+
+  database.get(
+    `SELECT * FROM usuarios WHERE id = ?`,
+    [usuario_id],
+    (error, user) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ error: "Erro ao acessar o banco de dados" });
+      }
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      database.run(
+        `INSERT INTO tarefas (tarefa, usuario_id) VALUES (?, ?)`,
+        [tarefa, usuario_id],
+        function (error) {
+          if (error) {
+            return res.status(500).json({ error: "Erro ao inserir tarefa" });
+          }
+          return res.status(201).json({ id: this.lastID, tarefa, usuario_id });
+        }
+      );
+    }
+  );
 });
 
 app.delete("/tarefas/:id", (req, res) => {
