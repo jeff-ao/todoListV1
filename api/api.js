@@ -32,13 +32,12 @@ database.run(
 
 app.post("/usuarios", (req, res) => {
   const { nome, email, senha } = req.body; // { nome: "Fulano", email: "fulano@gmail", senha: "123456"}
-  //validações
+
   if (!nome || !email || !senha) {
     return res
       .status(400)
       .json({ error: "Envie todos os campos obrigatórios" });
   }
-  //TODO: validar se a senha tem 1 char maius, 1 char min, 1 num e pelo menos 8 chars
 
   if (
     senha.length < 8 ||
@@ -46,7 +45,7 @@ app.post("/usuarios", (req, res) => {
       minUppercase: 1,
       minLowercase: 1,
       minNumbers: 1,
-      minSymbols: 0,
+      minSymbols: 1,
     })
   ) {
     return res.status(400).json({
@@ -90,13 +89,11 @@ app.get("/tarefas", (req, res) => {
   database.get(
     `SELECT * FROM usuarios WHERE id = ?`,
     [usuario_id],
-    (error, user) => {
+    (error, row) => {
       if (error) {
-        return res
-          .status(500)
-          .json({ error: "Erro ao acessar o banco de dados" });
+        return res.status(500).json({ error: "Erro interno" });
       }
-      if (!user) {
+      if (!row) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
 
@@ -122,13 +119,11 @@ app.post("/tarefas", (req, res) => {
   database.get(
     `SELECT * FROM usuarios WHERE id = ?`,
     [usuario_id],
-    (error, user) => {
+    (error, row) => {
       if (error) {
-        return res
-          .status(500)
-          .json({ error: "Erro ao acessar o banco de dados" });
+        return res.status(500).json({ error: "Erro interno" });
       }
-      if (!user) {
+      if (!row) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
 
