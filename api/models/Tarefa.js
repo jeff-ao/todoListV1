@@ -47,6 +47,18 @@ const Tarefa = {
       );
     });
   },
+  obterPorId: (id) => {
+    return new Promise((resolve, reject) => {
+      database.get(
+        `SELECT * FROM tarefas WHERE id = ?`,
+        [id],
+        function (error, row) {
+          if (error) reject(error);
+          else resolve(row);
+        }
+      );
+    });
+  },
 };
 
 export default Tarefa;

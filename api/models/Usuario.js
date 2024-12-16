@@ -45,6 +45,18 @@ const Usuario = {
       );
     });
   },
+  obterPorEmail: (email) => {
+    return new Promise((resolve, reject) => {
+      database.get(
+        `SELECT * FROM usuarios WHERE email = ?`,
+        [email],
+        function (error, row) {
+          if (error) reject(error);
+          else resolve(row);
+        }
+      );
+    });
+  },
 };
 
 export default Usuario;

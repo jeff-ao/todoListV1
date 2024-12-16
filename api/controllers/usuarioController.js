@@ -14,7 +14,7 @@ const usuarioController = {
     res.status(201).send({ status: "OK", id: resultado.id }); //cadastro deu certo
   },
   logarUsuario: async (req, res) => {
-    const { email, senha } = req.body;
+    const { email, senha } = req.query;
     const resultado = await usuarioService.logarUsuario(email, senha);
     if (resultado.erro) return res.status(400).json(resultado); //login deu errado
     return res.status(200).json(resultado); //login deu certo

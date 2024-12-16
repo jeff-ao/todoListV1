@@ -19,6 +19,9 @@ const tarefaService = {
   deletarTarefa: async (id) => {
     if (!id) return { erro: "Envie o id da tarefa" };
 
+    const tarefaExistente = await Tarefa.obterPorId(id);
+    if (!tarefaExistente) return { erro: "Tarefa não encontrada" };
+
     try {
       const resultado = await Tarefa.deletar(id);
       if (resultado.erro) return { erro: "Erro ao deletar tarefa no banco" };
@@ -29,6 +32,10 @@ const tarefaService = {
   },
   atualizarTarefa: async (id, tarefa) => {
     if (!id) return { erro: "Envie o id da tarefa" };
+    if (!tarefa) return { erro: "Envie o texto da tarefa" };
+
+    const tarefaExistente = await Tarefa.obterPorId(id);
+    if (!tarefaExistente) return { erro: "Tarefa não encontrada" };
 
     try {
       const resultado = await Tarefa.atualizar(id, tarefa);

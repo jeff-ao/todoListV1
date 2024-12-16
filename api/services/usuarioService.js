@@ -6,6 +6,9 @@ const usuarioService = {
     if (!novoUsuario.nome || !novoUsuario.email || !novoUsuario.senha)
       return { erro: "Envie todos os campos obrigatórios" };
 
+    if (!validator.isEmail(novoUsuario.email))
+      return { erro: "Email inválido" };
+
     if (
       novoUsuario.senha.length < 8 ||
       !validator.isStrongPassword(novoUsuario.senha, {
@@ -16,11 +19,16 @@ const usuarioService = {
       })
     ) {
       return {
-        erro: "A senha deve conter pelo menos 8 caracteres, incluindo ao menos uma letra maiúscula, uma letra minúscula e um número.",
+        erro: "A senha deve conter pelo menos 8 caracteres, incluindo ao menos uma letra maiúscula, uma letra minúscula, um número e um símbolo.",
       };
     }
 
     try {
+      const usuarioExistente = await Usuario.obterPorEmail(novoUsuario.email);
+      if (usuarioExistente) {
+        return { erro: "Email já cadastrado" };
+      }
+
       const resultado = await Usuario.inserir(novoUsuario);
       if (resultado.erro) return { erro: "Erro ao inserir usuário no banco" };
       return resultado;
@@ -30,6 +38,7 @@ const usuarioService = {
   },
   logarUsuario: async (email, senha) => {
     if (!email || !senha) return { erro: "Envie todos os campos obrigatórios" };
+    if (!validator.isEmail(email)) return { erro: "Email inválido" }; //double check
     return await Usuario.logar(email, senha);
   },
   obterUsuario: async (id) => {
