@@ -1,6 +1,5 @@
 import Tarefa from "../models/Tarefa.js";
 import usuarioService from "./usuarioService.js";
-import validator from "validator";
 
 const tarefaService = {
   cadastrarTarefa: async (novaTarefa) => {
