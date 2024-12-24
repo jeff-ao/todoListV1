@@ -9,7 +9,7 @@ const usuarioController = {
       senha: body.senha,
     };
     const resultado = await usuarioService.cadastrarUsuario(novoUsuario);
-    // if (resultado.erro) return res.status(400).json(resultado.erro); //cadastro deu errado
+    if (resultado.erro) return res.status(400).json(resultado.erro); //cadastro deu errado
 
     res.status(201).send({ status: "OK", id: resultado.id }); //cadastro deu certo
   },

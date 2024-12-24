@@ -24,9 +24,9 @@ const tarefaController = {
   },
   atualizarTarefa: async (req, res) => {
     const { id } = req.params;
-    const { tarefa } = req.query;
+    const { texto } = req.query;
 
-    const resultado = await tarefaService.atualizarTarefa(id, tarefa);
+    const resultado = await tarefaService.atualizarTarefa(id, texto);
     if (resultado.erro) return res.status(400).json(resultado); //atualizar deu errado
     return res.status(200).send("Tarefa atualizada com sucesso!"); //atualizar deu certo
   },

@@ -5,19 +5,26 @@ import {
   Typography,
   Box,
   Container,
-  TextField,
-  Modal,
-  List,
-  ListItem,
-  ListItemText,
+  Snackbar,
+  Alert,
 } from "@mui/material";
-import { createTask, fetchTasks } from "../../services/tarefaService";
-import Notification from "../../components/Notification";
+import {
+  createTask,
+  fetchTasks,
+  deleteTask,
+  updateTask,
+} from "@/services/tarefaService.js";
+import TaskTable from "@/components/TaskTable";
+import NewTaskModal from "@/components/NewTaskModal";
+import EditTaskModal from "@/components/EditTaskModal";
 
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
-  const [openModal, setOpenModal] = useState(false);
+  const [updatedTask, setUpdatedTask] = useState(null);
+  const [openNewTaskModal, setOpenNewTaskModal] = useState(false);
+  const [openEditTaskModal, setOpenEditTaskModal] = useState(false);
+
   const [notification, setNotification] = useState({
     open: false,
     message: "",
@@ -26,23 +33,27 @@ export default function Home() {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id;
+  const fetchUserTasks = async () => {
+    try {
+      const data = await fetchTasks(userId);
+      setTasks(data);
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: "Erro ao carregar tarefas.",
+        severity: "error",
+      });
+    }
+  };
 
   useEffect(() => {
-    if (userId) {
-      fetchTasks(userId)
-        .then((data) => setTasks(data))
-        .catch(() => {
-          setNotification({
-            open: true,
-            message: "Erro ao carregar tarefas.",
-            severity: "error",
-          });
-        });
-    }
-  }, [userId]);
+    if (userId) fetchUserTasks();
+  }, [userId]); //para ao renderizar o componente, puxar as tarefas do backend
 
   const handleCreateTask = async () => {
-    if (!newTask.trim()) {
+    const newTaskCleaned = newTask.trim();
+    if (!newTaskCleaned) {
+      // Verifica se a tarefa está vazia ou é undefined
       setNotification({
         open: true,
         message: "Por favor, insira uma tarefa.",
@@ -52,13 +63,68 @@ export default function Home() {
     }
 
     try {
-      await createTask({ tarefa: newTask, usuario_id: userId });
+      await createTask({ tarefa: newTaskCleaned, usuario_id: userId });
       setNotification({
         open: true,
         message: "Tarefa criada com sucesso.",
         severity: "success",
       });
+
       setNewTask("");
+      setOpenNewTaskModal(false);
+      fetchTasks(userId).then((data) => setTasks(data)); // Recarrega a lista de tarefas
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: error.message,
+        severity: "error",
+      });
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await deleteTask(taskId);
+      setNotification({
+        open: true,
+        message: "Tarefa deletada com sucesso.",
+        severity: "success",
+      });
+      fetchTasks(userId).then((data) => setTasks(data)); // Recarrega a lista de tarefas
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: error.message,
+        severity: "error",
+      });
+    }
+  };
+
+  const handleEditTask = (task) => {
+    setUpdatedTask(task);
+    setOpenEditTaskModal(true);
+  };
+
+  const handleUpdateTask = async () => {
+    if (!updatedTask || !updatedTask.tarefa.trim()) {
+      setNotification({
+        open: true,
+        message: "Por favor, insira uma tarefa.",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      await updateTask(updatedTask.id, updatedTask.tarefa);
+      setNotification({
+        open: true,
+        message: "Tarefa atualizada com sucesso.",
+        severity: "success",
+      });
+
+      setUpdatedTask(null);
+      setOpenEditTaskModal(false);
       fetchTasks(userId).then((data) => setTasks(data)); // Recarrega a lista de tarefas
     } catch (error) {
       setNotification({
@@ -75,34 +141,64 @@ export default function Home() {
 
   return (
     <Container maxWidth="sm">
-      <Notification
+      <Snackbar
         open={notification.open}
-        message={notification.message}
-        severity={notification.severity}
+        autoHideDuration={3000}
         onClose={handleCloseNotification}
-      />
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          variant="filled"
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
       <Box textAlign="center" mt={8}>
-        <Typography variant="h4">Tarefas</Typography>
-        <TextField
-          label="Nova Tarefa"
-          fullWidth
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          margin="normal"
-        />
-        <Box mt={2}>
-          <Button variant="contained" onClick={handleCreateTask}>
-            Criar Tarefa
-          </Button>
-        </Box>
+        <Typography variant="h4">Bem-vindo, {user?.nome}</Typography>
+        <Button
+          variant="contained"
+          onClick={() => setOpenNewTaskModal(true)}
+          style={{ marginTop: "20px" }}
+        >
+          Adicionar Nova Tarefa
+        </Button>
 
-        <List>
-          {tasks.map((task) => (
-            <ListItem key={task.id}>
-              <ListItemText primary={task.tarefa} />
-            </ListItem>
-          ))}
-        </List>
+        {tasks.length > 0 ? (
+          <TaskTable
+            tasks={tasks}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+          />
+        ) : (
+          <Snackbar
+            open
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            autoHideDuration={3000}
+            onClose={handleCloseNotification}
+          >
+            <Alert severity="info" onClose={handleCloseNotification}>
+              Adicione uma tarefa para iniciar
+            </Alert>
+          </Snackbar>
+        )}
+
+        <NewTaskModal
+          open={openNewTaskModal}
+          onClose={() => setOpenNewTaskModal(false)}
+          newTask={newTask}
+          setNewTask={setNewTask}
+          handleCreateTask={handleCreateTask}
+        />
+
+        <EditTaskModal
+          open={openEditTaskModal}
+          onClose={() => setOpenEditTaskModal(false)}
+          updatedTask={updatedTask}
+          setUpdatedTask={setUpdatedTask}
+          handleEditTask={handleUpdateTask}
+        />
       </Box>
     </Container>
   );

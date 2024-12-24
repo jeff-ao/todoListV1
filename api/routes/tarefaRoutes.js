@@ -61,7 +61,7 @@ router.get("/", tarefaController.obterTarefas);
  *           type: integer
  *         required: true
  *       - in: query
- *         name: tarefa
+ *         name: texto
  *         schema:
  *           type: string
  *           required: true

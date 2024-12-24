@@ -32,3 +32,14 @@ export const deleteTask = async (taskId) => {
     throw new Error(error.response?.data?.message || "Erro ao deletar tarefa");
   }
 };
+
+// Função para atualizar uma tarefa
+export const updateTask = async (taskId, novoTexto) => {
+  try {
+    await axios.put(`${API_URL}/tarefas/${taskId}?texto=${novoTexto}`);
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message || "Erro ao atualizar tarefa"
+    );
+  }
+};
