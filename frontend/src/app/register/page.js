@@ -1,9 +1,16 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, TextField, Typography, Box, Container } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Container,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { registerUser } from "../../services/usuarioService";
-import Notification from "../../components/Notification";
 
 export default function Register() {
   const [nome, setNome] = useState("");
@@ -62,12 +69,20 @@ export default function Register() {
 
   return (
     <Container maxWidth="sm">
-      <Notification
+      <Snackbar
         open={notification.open}
-        message={notification.message}
-        severity={notification.severity}
+        autoHideDuration={3000}
         onClose={handleCloseNotification}
-      />
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          variant="filled"
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
       <Box textAlign="center" mt={8}>
         <Typography variant="h4">Cadastro</Typography>
         <TextField

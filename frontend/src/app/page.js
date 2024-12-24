@@ -8,9 +8,9 @@ import {
   Box,
   Container,
   Alert,
+  Snackbar,
 } from "@mui/material";
-import { loginUser } from "../services/usuarioService";
-import Notification from "../components/Notification";
+import { loginUser } from "@/services/usuarioService";
 
 export default function Login() {
   const [sucessLogin, setSucessLogin] = useState(false);
@@ -27,7 +27,7 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       const data = await loginUser(email, senha);
-      //localStorage.setItem("user", JSON.stringify(data)); // Armazena o usuário logado no localStorage
+      localStorage.setItem("user", JSON.stringify(data)); // Armazena o usuário logado no localStorage
       setSucessLogin(true);
       setNomeUser(data.nome);
       setTimeout(() => router.push("/home"), 2000); // Redireciona para a página de Home
@@ -46,13 +46,35 @@ export default function Login() {
 
   return (
     <Container maxWidth="sm">
-      <Notification
+      <Snackbar
         open={notification.open}
-        message={notification.message}
-        severity={notification.severity}
+        autoHideDuration={3000}
         onClose={handleCloseNotification}
-      />
-      {sucessLogin && <Alert severity="success">Bem-vindo, {nomeUser}!</Alert>}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          variant="filled"
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={sucessLogin}
+        autoHideDuration={2000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={"success"}
+          variant="filled"
+        >
+          {" "}
+          Bem-vindo, {nomeUser}!
+        </Alert>
+      </Snackbar>
+
       <Box textAlign="center" mt={8}>
         <Typography variant="h4">Login</Typography>
         <TextField
@@ -70,8 +92,8 @@ export default function Login() {
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
         />
-        <Box mt={2}>
-          <Button variant="contained" onClick={handleLogin}>
+        <Box mt={2} display="flex" justifyContent="center">
+          <Button variant="contained" onClick={handleLogin} sx={{ mr: 2 }}>
             Login
           </Button>
           <Button variant="outlined" onClick={() => router.push("/register")}>
