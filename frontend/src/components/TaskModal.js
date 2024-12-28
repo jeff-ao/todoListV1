@@ -1,23 +1,24 @@
 import React from "react";
 import { Box, Typography, TextField, Button, Modal } from "@mui/material";
 
-const EditTaskModal = ({
+const TaskModal = ({
   open,
   onClose,
-  updatedTask,
-  setUpdatedTask,
-  handleEditTask,
+  task,
+  setTask,
+  handleSubmit,
+  isEditMode,
 }) => {
-  const handleSubmit = (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    handleEditTask();
+    handleSubmit();
   };
 
   return (
     <Modal open={open} onClose={onClose}>
       <Box
         component="form"
-        onSubmit={handleSubmit}
+        onSubmit={handleFormSubmit}
         sx={{
           position: "absolute",
           top: "50%",
@@ -31,23 +32,28 @@ const EditTaskModal = ({
         }}
       >
         <Typography variant="h6" component="h2">
-          Atualizar Tarefa
+          {isEditMode ? "Atualizar Tarefa" : "Nova Tarefa"}
         </Typography>
         <TextField
           label="Tarefa"
           fullWidth
-          value={updatedTask?.tarefa || ""}
-          onChange={(e) =>
-            setUpdatedTask({ ...updatedTask, tarefa: e.target.value })
-          }
+          value={task?.texto || ""}
+          onChange={(e) => setTask({ ...task, texto: e.target.value })}
+          margin="normal"
+        />
+        <TextField
+          label="Categoria"
+          fullWidth
+          value={task?.categoria || ""}
+          onChange={(e) => setTask({ ...task, categoria: e.target.value })}
           margin="normal"
         />
         <Button type="submit" variant="contained">
-          Atualizar
+          {isEditMode ? "Atualizar" : "Criar"}
         </Button>
       </Box>
     </Modal>
   );
 };
 
-export default EditTaskModal;
+export default TaskModal;

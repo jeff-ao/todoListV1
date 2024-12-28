@@ -15,15 +15,13 @@ import {
   updateTask,
 } from "@/services/tarefaService.js";
 import TaskTable from "@/components/TaskTable";
-import NewTaskModal from "@/components/NewTaskModal";
-import EditTaskModal from "@/components/EditTaskModal";
+import TaskModal from "@/components/TaskModal";
 
 export default function Home() {
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState("");
-  const [updatedTask, setUpdatedTask] = useState(null);
-  const [openNewTaskModal, setOpenNewTaskModal] = useState(false);
-  const [openEditTaskModal, setOpenEditTaskModal] = useState(false);
+  const [task, setTask] = useState({ texto: "", categoria: "" });
+  const [openTaskModal, setOpenTaskModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [notification, setNotification] = useState({
     open: false,
@@ -31,29 +29,33 @@ export default function Home() {
     severity: "success",
   });
 
-  const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user?.id;
-  const fetchUserTasks = async () => {
-    try {
-      const data = await fetchTasks(userId);
-      setTasks(data);
-    } catch (error) {
-      setNotification({
-        open: true,
-        message: "Erro ao carregar tarefas.",
-        severity: "error",
-      });
-    }
-  };
+  const [user, setUser] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    if (userId) fetchUserTasks();
-  }, [userId]); //para ao renderizar o componente, puxar as tarefas do backend
+    if (typeof window !== "undefined") {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(storedUser);
+      setUserId(storedUser?.id);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchTasks(userId)
+        .then((data) => setTasks(data))
+        .catch(() => {
+          setNotification({
+            open: true,
+            message: "Erro ao carregar tarefas.",
+            severity: "error",
+          });
+        });
+    }
+  }, [userId]);
 
   const handleCreateTask = async () => {
-    const newTaskCleaned = newTask.trim();
-    if (!newTaskCleaned) {
-      // Verifica se a tarefa está vazia ou é undefined
+    if (!task.texto.trim()) {
       setNotification({
         open: true,
         message: "Por favor, insira uma tarefa.",
@@ -63,15 +65,19 @@ export default function Home() {
     }
 
     try {
-      await createTask({ tarefa: newTaskCleaned, usuario_id: userId });
+      await createTask({
+        tarefa: task.texto,
+        categoria: task.categoria,
+        usuario_id: userId,
+      });
       setNotification({
         open: true,
         message: "Tarefa criada com sucesso.",
         severity: "success",
       });
 
-      setNewTask("");
-      setOpenNewTaskModal(false);
+      setTask({ texto: "", categoria: "" });
+      setOpenTaskModal(false);
       fetchTasks(userId).then((data) => setTasks(data)); // Recarrega a lista de tarefas
     } catch (error) {
       setNotification({
@@ -101,12 +107,13 @@ export default function Home() {
   };
 
   const handleEditTask = (task) => {
-    setUpdatedTask(task);
-    setOpenEditTaskModal(true);
+    setTask(task);
+    setIsEditMode(true);
+    setOpenTaskModal(true);
   };
 
   const handleUpdateTask = async () => {
-    if (!updatedTask || !updatedTask.tarefa.trim()) {
+    if (!task.texto.trim()) {
       setNotification({
         open: true,
         message: "Por favor, insira uma tarefa.",
@@ -116,15 +123,19 @@ export default function Home() {
     }
 
     try {
-      await updateTask(updatedTask.id, updatedTask.tarefa);
+      await updateTask(task.id, {
+        texto: task.texto,
+        categoria: task.categoria,
+      });
       setNotification({
         open: true,
         message: "Tarefa atualizada com sucesso.",
         severity: "success",
       });
 
-      setUpdatedTask(null);
-      setOpenEditTaskModal(false);
+      setTask({ texto: "", categoria: "" });
+      setIsEditMode(false);
+      setOpenTaskModal(false);
       fetchTasks(userId).then((data) => setTasks(data)); // Recarrega a lista de tarefas
     } catch (error) {
       setNotification({
@@ -159,45 +170,28 @@ export default function Home() {
         <Typography variant="h4">Bem-vindo, {user?.nome}</Typography>
         <Button
           variant="contained"
-          onClick={() => setOpenNewTaskModal(true)}
+          onClick={() => {
+            setIsEditMode(false);
+            setOpenTaskModal(true);
+          }}
           style={{ marginTop: "20px" }}
         >
           Adicionar Nova Tarefa
         </Button>
 
-        {tasks.length > 0 ? (
-          <TaskTable
-            tasks={tasks}
-            onEdit={handleEditTask}
-            onDelete={handleDeleteTask}
-          />
-        ) : (
-          <Snackbar
-            open
-            anchorOrigin={{ vertical: "top", horizontal: "right" }}
-            autoHideDuration={3000}
-            onClose={handleCloseNotification}
-          >
-            <Alert severity="info" onClose={handleCloseNotification}>
-              Adicione uma tarefa para iniciar
-            </Alert>
-          </Snackbar>
-        )}
-
-        <NewTaskModal
-          open={openNewTaskModal}
-          onClose={() => setOpenNewTaskModal(false)}
-          newTask={newTask}
-          setNewTask={setNewTask}
-          handleCreateTask={handleCreateTask}
+        <TaskTable
+          tasks={tasks}
+          onEdit={handleEditTask}
+          onDelete={handleDeleteTask}
         />
 
-        <EditTaskModal
-          open={openEditTaskModal}
-          onClose={() => setOpenEditTaskModal(false)}
-          updatedTask={updatedTask}
-          setUpdatedTask={setUpdatedTask}
-          handleEditTask={handleUpdateTask}
+        <TaskModal
+          open={openTaskModal}
+          onClose={() => setOpenTaskModal(false)}
+          task={task}
+          setTask={setTask}
+          handleSubmit={isEditMode ? handleUpdateTask : handleCreateTask}
+          isEditMode={isEditMode}
         />
       </Box>
     </Container>

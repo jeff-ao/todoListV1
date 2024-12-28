@@ -9,6 +9,11 @@ const tarefaService = {
     const usuario = await usuarioService.obterUsuario(novaTarefa.usuario_id);
     if (usuario.erro) return { erro: "Usuário não encontrado" };
     try {
+      const tarefaJaExiste = await Tarefa.obterPorTexto(
+        novaTarefa.tarefa,
+        novaTarefa.usuario_id
+      );
+      if (tarefaJaExiste) return { erro: "Tarefa já cadastrada" };
       const resultado = await Tarefa.inserir(novaTarefa);
       if (resultado.erro) return { erro: "Erro ao inserir tarefa no banco" };
       return resultado;
@@ -30,7 +35,7 @@ const tarefaService = {
       return { erro: "Erro ao deletar tarefa no banco" };
     }
   },
-  atualizarTarefa: async (id, tarefa) => {
+  atualizarTarefa: async (id, tarefa, categoria) => {
     if (!id) return { erro: "Envie o id da tarefa" };
     if (!tarefa) return { erro: "Envie o texto da tarefa" };
 
@@ -38,7 +43,7 @@ const tarefaService = {
     if (!tarefaExistente) return { erro: "Tarefa não encontrada" };
 
     try {
-      const resultado = await Tarefa.atualizar(id, tarefa);
+      const resultado = await Tarefa.atualizar(id, tarefa, categoria);
       if (resultado.erro) return { erro: "Erro ao atualizar tarefa no banco" };
       return resultado;
     } catch (error) {
