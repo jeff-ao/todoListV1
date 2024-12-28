@@ -35,7 +35,17 @@ app.use("/usuarios", usuarioRoutes);
 app.use("/tarefas", tarefaRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-databaseConfig.startDatabase();
+databaseConfig
+  .getDatabase()
+  .all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    if (tables.length === 0) {
+      databaseConfig.startDatabase();
+    }
+  });
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

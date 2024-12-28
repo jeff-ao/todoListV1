@@ -6,8 +6,10 @@ const tarefaController = {
     const novaTarefa = {
       tarefa: body.tarefa,
       usuario_id: body.usuario_id,
+      categoria: body.categoria,
     };
     const resultado = await tarefaService.cadastrarTarefa(novaTarefa);
+    if (resultado.erro) return res.status(400).json(resultado); //cadastrar deu errado
     res.status(201).send({ status: "OK", id: resultado.id });
   },
   obterTarefas: async (req, res) => {
@@ -24,9 +26,9 @@ const tarefaController = {
   },
   atualizarTarefa: async (req, res) => {
     const { id } = req.params;
-    const { texto } = req.query;
+    const { texto, categoria } = req.query;
 
-    const resultado = await tarefaService.atualizarTarefa(id, texto);
+    const resultado = await tarefaService.atualizarTarefa(id, texto, categoria);
     if (resultado.erro) return res.status(400).json(resultado); //atualizar deu errado
     return res.status(200).send("Tarefa atualizada com sucesso!"); //atualizar deu certo
   },

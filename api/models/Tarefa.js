@@ -6,8 +6,8 @@ const Tarefa = {
   inserir: (novaTarefa) => {
     return new Promise((resolve, reject) => {
       database.run(
-        `INSERT INTO tarefas (tarefa, usuario_id) VALUES (?, ?)`,
-        [novaTarefa.tarefa, novaTarefa.usuario_id],
+        `INSERT INTO tarefas (tarefa, usuario_id, categoria) VALUES (?, ?, ?)`,
+        [novaTarefa.tarefa, novaTarefa.usuario_id, novaTarefa.categoria],
         function (error) {
           if (error) reject(error);
           else resolve({ id: this.lastID });
@@ -23,11 +23,11 @@ const Tarefa = {
       });
     });
   },
-  atualizar: (id, tarefa) => {
+  atualizar: (id, tarefa, categoria) => {
     return new Promise((resolve, reject) => {
       database.run(
-        `UPDATE tarefas SET tarefa = ? WHERE id = ?`,
-        [tarefa, id],
+        `UPDATE tarefas SET tarefa = ?, categoria = ? WHERE id = ?`,
+        [tarefa, categoria, id],
         function (error) {
           if (error) reject(error);
           else resolve({ status: "Tarefa atualizada com sucesso!" });
@@ -52,6 +52,18 @@ const Tarefa = {
       database.get(
         `SELECT * FROM tarefas WHERE id = ?`,
         [id],
+        function (error, row) {
+          if (error) reject(error);
+          else resolve(row);
+        }
+      );
+    });
+  },
+  obterPorTexto: (texto, usuarioId, categoria) => {
+    return new Promise((resolve, reject) => {
+      database.get(
+        `SELECT * FROM tarefas WHERE tarefa = ? AND usuario_id = ? AND categoria = ?`,
+        [texto, usuarioId, categoria],
         function (error, row) {
           if (error) reject(error);
           else resolve(row);

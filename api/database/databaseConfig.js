@@ -20,6 +20,8 @@ const databaseConfig = {
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   )`
     );
+
+    //database.run(`ALTER TABLE tarefas ADD COLUMN categoria TEXT`);
   },
   getDatabase: () => database,
 };

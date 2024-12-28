@@ -20,6 +20,8 @@ const router = express.Router();
  *                 type: string
  *               usuario_id:
  *                 type: integer
+ *               categoria:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Tarefa criada com sucesso
@@ -60,11 +62,17 @@ router.get("/", tarefaController.obterTarefas);
  *         schema:
  *           type: integer
  *         required: true
- *       - in: query
- *         name: texto
- *         schema:
- *           type: string
- *           required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               texto:
+ *                 type: string
+ *               categoria:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Tarefa atualizada com sucesso
