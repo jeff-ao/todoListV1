@@ -1,11 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/api/node_modules
-/frontend/node_modules
-/frontend/.next
-/.pnp
+# node_modules/
+# api/node_modules/
+frontend/node_modules
+frontend/.next
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
