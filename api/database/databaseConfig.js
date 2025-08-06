@@ -9,11 +9,20 @@ const pool = new pg.Pool({
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  // Adicione esta linha para habilitar a conexão segura (SSL)
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 const databaseConfig = {
   startDatabase: async () => {
     try {
+      // Testando a conexão para garantir que tudo está ok
+      const client = await pool.connect();
+      console.log("Conexão com o banco de dados estabelecida com sucesso! ✅");
+      client.release();
+
       await pool.query(
         `CREATE TABLE IF NOT EXISTS usuarios (
           id SERIAL PRIMARY KEY,
@@ -32,10 +41,9 @@ const databaseConfig = {
           FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
         )`
       );
-      console.log("Banco de dados iniciado e tabelas verificadas/criadas. ✅");
+      console.log("Tabelas verificadas/criadas. ✅");
     } catch (error) {
-      console.error("Erro ao iniciar o banco de dados:", error);
-      // Adicione esta linha para repassar o erro
+      console.error("❌ Erro ao iniciar o banco de dados:", error);
       throw error;
     }
   },
