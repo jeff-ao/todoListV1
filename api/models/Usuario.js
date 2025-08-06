@@ -1,61 +1,40 @@
 import databaseConfig from "../database/databaseConfig.js";
 
+// O 'database' agora é o nosso pool de conexões
 const database = databaseConfig.getDatabase();
 
 const Usuario = {
-  inserir: (novoUsuario) => {
-    return new Promise((resolve, reject) => {
-      database.run(
-        `INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)`,
-        [novoUsuario.nome, novoUsuario.email, novoUsuario.senha],
-        function (error) {
-          if (error) reject(error);
-          else resolve({ id: this.lastID });
-        }
-      );
-    });
+  inserir: async (novoUsuario) => {
+    // Usando a cláusula RETURNING para obter o ID do usuário inserido
+    const sql = `INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING id`;
+    const values = [novoUsuario.nome, novoUsuario.email, novoUsuario.senha];
+
+    // O pg usa $1, $2, ... como placeholders
+    const result = await database.query(sql, values);
+    return result.rows[0]; // Retorna { id: ... }
   },
-  logar: (email, senha) => {
-    return new Promise((resolve, reject) => {
-      database.all(
-        `SELECT * FROM usuarios WHERE email = ? AND senha = ?`,
-        [email, senha],
-        function (error, rows) {
-          if (error) reject({ erro: "Erro ao acessar o banco de dados" });
-          else {
-            if (rows.length === 0) resolve({ erro: "Usuário não encontrado" });
-            else if (rows.length > 1)
-              resolve({ erro: "Mais de um usuário encontrado" });
-            else resolve(rows[0]);
-          }
-        }
-      );
-    });
+
+  logar: async (email, senha) => {
+    const sql = `SELECT * FROM usuarios WHERE email = $1 AND senha = $2`;
+    const result = await database.query(sql, [email, senha]);
+
+    // a consulta retorna um array de linhas (rows)
+    if (result.rows.length === 0) {
+      return { erro: "Usuário não encontrado" };
+    }
+    return result.rows[0]; // Retorna o primeiro usuário encontrado
   },
-  obter: (id) => {
-    return new Promise((resolve, reject) => {
-      database.get(
-        `SELECT * FROM usuarios WHERE id = ?`,
-        [id],
-        function (error, row) {
-          if (error) reject(error);
-          else if (!row) resolve({ erro: "Usuário não encontrado" });
-          else resolve(row);
-        }
-      );
-    });
+
+  obter: async (id) => {
+    const sql = `SELECT * FROM usuarios WHERE id = $1`;
+    const result = await database.query(sql, [id]);
+    return result.rows[0] || { erro: "Usuário não encontrado" };
   },
-  obterPorEmail: (email) => {
-    return new Promise((resolve, reject) => {
-      database.get(
-        `SELECT * FROM usuarios WHERE email = ?`,
-        [email],
-        function (error, row) {
-          if (error) reject(error);
-          else resolve(row);
-        }
-      );
-    });
+
+  obterPorEmail: async (email) => {
+    const sql = `SELECT * FROM usuarios WHERE email = $1`;
+    const result = await database.query(sql, [email]);
+    return result.rows[0]; // Retorna o usuário ou undefined
   },
 };
 

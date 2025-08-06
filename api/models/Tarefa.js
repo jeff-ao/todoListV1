@@ -3,73 +3,45 @@ import databaseConfig from "../database/databaseConfig.js";
 const database = databaseConfig.getDatabase();
 
 const Tarefa = {
-  inserir: (novaTarefa) => {
-    return new Promise((resolve, reject) => {
-      database.run(
-        `INSERT INTO tarefas (tarefa, usuario_id, categoria) VALUES (?, ?, ?)`,
-        [novaTarefa.tarefa, novaTarefa.usuario_id, novaTarefa.categoria],
-        function (error) {
-          if (error) reject(error);
-          else resolve({ id: this.lastID });
-        }
-      );
-    });
+  inserir: async (novaTarefa) => {
+    const sql = `INSERT INTO tarefas (tarefa, usuario_id, categoria) VALUES ($1, $2, $3) RETURNING id`;
+    const values = [
+      novaTarefa.tarefa,
+      novaTarefa.usuario_id,
+      novaTarefa.categoria,
+    ];
+
+    const result = await database.query(sql, values);
+    return result.rows[0];
   },
-  deletar: (id) => {
-    return new Promise((resolve, reject) => {
-      database.run(`DELETE FROM tarefas WHERE id = ?`, [id], function (error) {
-        if (error) reject(error);
-        else resolve({ status: "Tarefa deletada com sucesso!" });
-      });
-    });
+
+  deletar: async (id) => {
+    await database.query(`DELETE FROM tarefas WHERE id = $1`, [id]);
+    return { status: "Tarefa deletada com sucesso!" };
   },
-  atualizar: (id, tarefa, categoria) => {
-    return new Promise((resolve, reject) => {
-      database.run(
-        `UPDATE tarefas SET tarefa = ?, categoria = ? WHERE id = ?`,
-        [tarefa, categoria, id],
-        function (error) {
-          if (error) reject(error);
-          else resolve({ status: "Tarefa atualizada com sucesso!" });
-        }
-      );
-    });
+
+  atualizar: async (id, tarefa, categoria) => {
+    const sql = `UPDATE tarefas SET tarefa = $1, categoria = $2 WHERE id = $3`;
+    await database.query(sql, [tarefa, categoria, id]);
+    return { status: "Tarefa atualizada com sucesso!" };
   },
-  obter: (usuario_id) => {
-    return new Promise((resolve, reject) => {
-      database.all(
-        `SELECT * FROM tarefas WHERE usuario_id = ?`,
-        [usuario_id],
-        function (error, rows) {
-          if (error) reject(error);
-          else resolve(rows);
-        }
-      );
-    });
+
+  obter: async (usuario_id) => {
+    const sql = `SELECT * FROM tarefas WHERE usuario_id = $1`;
+    const result = await database.query(sql, [usuario_id]);
+    return result.rows;
   },
-  obterPorId: (id) => {
-    return new Promise((resolve, reject) => {
-      database.get(
-        `SELECT * FROM tarefas WHERE id = ?`,
-        [id],
-        function (error, row) {
-          if (error) reject(error);
-          else resolve(row);
-        }
-      );
-    });
+
+  obterPorId: async (id) => {
+    const sql = `SELECT * FROM tarefas WHERE id = $1`;
+    const result = await database.query(sql, [id]);
+    return result.rows[0];
   },
-  obterPorTexto: (texto, usuarioId, categoria) => {
-    return new Promise((resolve, reject) => {
-      database.get(
-        `SELECT * FROM tarefas WHERE tarefa = ? AND usuario_id = ? AND categoria = ?`,
-        [texto, usuarioId, categoria],
-        function (error, row) {
-          if (error) reject(error);
-          else resolve(row);
-        }
-      );
-    });
+
+  obterPorTexto: async (texto, usuarioId, categoria) => {
+    const sql = `SELECT * FROM tarefas WHERE tarefa = $1 AND usuario_id = $2 AND categoria = $3`;
+    const result = await database.query(sql, [texto, usuarioId, categoria]);
+    return result.rows[0];
   },
 };
 

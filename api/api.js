@@ -1,13 +1,18 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
 import usuarioRoutes from "./routes/usuarioRoutes.js";
 import databaseConfig from "./database/databaseConfig.js";
 import tarefaRoutes from "./routes/tarefaRoutes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsDoc from "swagger-jsdoc";
 
+// Carrega as variáveis de ambiente do arquivo .env
+// É importante que isso seja feito no início
+dotenv.config();
+
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001; // Boa prática: usar porta do ambiente ou padrão
 
 const swaggerOptions = {
   swaggerDefinition: {
@@ -19,7 +24,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:3001",
+        url: `http://localhost:${port}`,
       },
     ],
   },
@@ -35,18 +40,24 @@ app.use("/usuarios", usuarioRoutes);
 app.use("/tarefas", tarefaRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-databaseConfig
-  .getDatabase()
-  .all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    if (tables.length === 0) {
-      databaseConfig.startDatabase();
-    }
-  });
+// Função assíncrona para iniciar o servidor
+const startServer = async () => {
+  try {
+    // 1. Inicia a conexão com o banco e cria as tabelas se não existirem
+    await databaseConfig.startDatabase();
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+    // 2. Só depois que o banco estiver pronto, o servidor começa a ouvir
+    app.listen(port, () => {
+      console.log(`Servidor rodando na porta ${port} 🔥`);
+      console.log(
+        `Documentação da API disponível em http://localhost:${port}/api-docs`
+      );
+    });
+  } catch (error) {
+    console.error("Falha ao iniciar o servidor:", error);
+    process.exit(1); // Encerra a aplicação se não conseguir conectar ao banco
+  }
+};
+
+// Inicia a aplicação
+startServer();
